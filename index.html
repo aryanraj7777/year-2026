@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 | Universal Chronicles</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        :root { --accent: #ffdf91; --nebula: #4834d4; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Georgia', serif; cursor: crosshair; }
+        
+        /* 3D Deep Space Background */
+        #universe {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center;
+            background-size: cover; filter: brightness(0.5) saturate(1.2); transform: scale(1.1); z-index: -2;
+        }
+
+        #fireworks-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 5; }
+
+        .ui-content {
+            position: relative; z-index: 10; height: 100vh; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; pointer-events: none;
+        }
+
+        /* The Story Book UI */
+        .book-container {
+            max-width: 650px; padding: 40px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(15px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-radius: 4px;
+            margin-top: 20px; position: relative; pointer-events: auto;
+        }
+
+        h1 { font-size: clamp(3rem, 10vw, 6rem); letter-spacing: 25px; margin: 0; font-weight: 100; text-shadow: 0 0 30px rgba(255,255,255,0.3); }
+
+        .quote-text { font-style: italic; font-size: 1.3rem; line-height: 1.6; color: var(--accent); min-height: 80px; }
+        
+        .lang-node {
+            position: absolute; color: rgba(255,255,255,0.4); font-size: 0.8rem;
+            letter-spacing: 2px; text-transform: uppercase; pointer-events: none;
+            transition: color 0.3s;
+        }
+
+        .search-container { margin-top: 30px; pointer-events: auto; }
+        .search-bar {
+            background: transparent; border: none; border-bottom: 2px solid var(--accent);
+            color: white; padding: 10px; width: 250px; text-align: center;
+            outline: none; font-size: 1rem; letter-spacing: 3px; transition: 0.5s;
+        }
+        .search-bar:focus { width: 350px; border-bottom-color: #fff; }
+
+        .btn-ignite {
+            margin-top: 20px; background: white; color: black; border: none;
+            padding: 10px 25px; cursor: pointer; font-weight: bold; letter-spacing: 2px;
+            transition: 0.3s; pointer-events: auto;
+        }
+        .btn-ignite:hover { background: var(--accent); transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <div id="universe"></div>
+    <canvas id="fireworks-canvas"></canvas>
+
+    <div class="ui-content">
+        <h1 id="year">2026</h1>
+        
+        <div class="book-container">
+            <div id="quote" class="quote-text">Loading the first chapter of 2026...</div>
+            
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="FIND YOUR LANGUAGE" oninput="filterUniverse(this.value)">
+            </div>
+            <button class="btn-ignite" onclick="manualIgnite()">CELEBRATE UNITY</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('fireworks-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        const stories = [
+            "Your story is a masterpiece waiting to be written.",
+            "In the book of life, the best chapters are ahead.",
+            "Every sunset is an opportunity to reset your soul.",
+            "In every language, hope is the universal dialect.",
+            "The stars are just distant fireworks for your success."
+        ];
+
+        const languages = [
+            {t: "Happy New Year", l: "English"}, {t: "Feliz Año Nuevo", l: "Spanish"},
+            {t: "Bonne Année", l: "French"}, {t: "Frohes Neues", l: "German"},
+            {t: "新年快乐", l: "Chinese"}, {t: "明けましておめでとう", l: "Japanese"},
+            {t: "새해 복 많이 받으세요", l: "Korean"}, {t: "كل عام وأنتم بخير", l: "Arabic"},
+            {t: "С Новым Годом", l: "Russian"}, {t: "Nav Varsh ki Shubhkamna", l: "Hindi"}
+        ];
+
+        // Resize Canvas
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Firework Particle Logic
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.velocity = { x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 };
+                this.alpha = 1; this.friction = 0.97;
+            }
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                this.velocity.x *= this.friction;
+                this.velocity.y *= this.friction;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= 0.01;
+            }
+        }
+
+        function createExplosion(x, y) {
+            const colors = ['#ffdf91', '#ffffff', '#4834d4', '#ff4757'];
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle(x, y, colors[Math.floor(Math.random() * colors.length)]));
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, i) => {
+                if (p.alpha > 0) { p.update(); p.draw(); }
+                else { particles.splice(i, 1); }
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Mouse Drift Background
+        window.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 15;
+            const y = (e.clientY / window.innerHeight - 0.5) * 15;
+            gsap.to("#universe", { x: x, y: y, duration: 2 });
+        });
+
+        // Quote Engine
+        let quoteIndex = 0;
+        function cycleQuotes() {
+            gsap.to("#quote", { opacity: 0, y: 10, duration: 1, onComplete: () => {
+                document.getElementById('quote').innerText = `"${stories[quoteIndex]}"`;
+                quoteIndex = (quoteIndex + 1) % stories.length;
+                gsap.to("#quote", { opacity: 1, y: 0, duration: 1 });
+            }});
+        }
+        setInterval(cycleQuotes, 6000);
+        cycleQuotes();
+
+        // Language Cloud
+        function initLanguages() {
+            languages.forEach((item) => {
+                const el = document.createElement('div');
+                el.className = 'lang-node';
+                el.innerText = item.t;
+                el.setAttribute('data-nation', item.l.toLowerCase());
+                document.body.appendChild(el);
+                
+                gsap.set(el, { 
+                    x: Math.random() * window.innerWidth, 
+                    y: Math.random() * window.innerHeight, 
+                    opacity: 0.1 
+                });
+
+                gsap.to(el, {
+                    x: "+=" + (Math.random() * 200 - 100),
+                    y: "+=" + (Math.random() * 200 - 100),
+                    duration: 10 + Math.random() * 10,
+                    repeat: -1, yoyo: true, ease: "sine.inOut"
+                });
+            });
+        }
+
+        function filterUniverse(val) {
+            const nodes = document.querySelectorAll('.lang-node');
+            nodes.forEach(n => {
+                if(val && n.getAttribute('data-nation').includes(val.toLowerCase())) {
+                    gsap.to(n, { opacity: 1, scale: 2.5, color: '#ffdf91', duration: 0.4 });
+                    createExplosion(window.innerWidth/2, window.innerHeight/2);
+                } else {
+                    gsap.to(n, { opacity: 0.1, scale: 1, color: '#fff', duration: 0.4 });
+                }
+            });
+        }
+
+        function manualIgnite() {
+            for(let i=0; i<5; i++) {
+                setTimeout(() => {
+                    createExplosion(Math.random() * canvas.width, Math.random() * canvas.height);
+                }, i * 200);
+            }
+        }
+
+        initLanguages();
+        gsap.from("#year", { scale: 0, opacity: 0, duration: 2.5, ease: "back.out(1.7)" });
+    </script>
+</body>
+</html>
